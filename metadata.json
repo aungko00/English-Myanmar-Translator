@@ -1,0 +1,6 @@
+{
+  "name": "ME Translator",
+  "description": "A ChatGPT-style translator for English and Myanmar languages with Cyberpunk theme support.",
+  "requestFramePermissions": ["microphone", "clipboard-read", "clipboard-write"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

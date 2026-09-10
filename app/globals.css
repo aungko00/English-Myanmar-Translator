@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --breakpoint-xs: 400px;
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
+  --font-roboto: var(--font-roboto);
+  --font-open-sans: var(--font-open-sans);
+  --font-lato: var(--font-lato);
+  --font-montserrat: var(--font-montserrat);
+  --font-playfair: var(--font-playfair);
+  --font-merriweather: var(--font-merriweather);
+  --font-ubuntu: var(--font-ubuntu);
+  --font-poppins: var(--font-poppins);
+  --font-noto-myanmar: var(--font-noto-myanmar);
+}
