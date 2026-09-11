@@ -846,23 +846,6 @@ const Translator = () => {
       currentTheme.text,
       currentFont.class
     )}>
-      {/* Custom Scrollbar Styles for Webkit */}
-      {currentTheme.isDark && (
-        <style dangerouslySetInnerHTML={{ __html: `
-          ::-webkit-scrollbar { width: 4px; }
-          ::-webkit-scrollbar-track { background: transparent; }
-          ::-webkit-scrollbar-thumb { background: ${isCyber ? '#00f2ff' : '#444'}; border-radius: 10px; }
-          ::-webkit-scrollbar-thumb:hover { background: ${isCyber ? '#00f2ff' : '#666'}; }
-        `}} />
-      )}
-      {!currentTheme.isDark && (
-        <style dangerouslySetInnerHTML={{ __html: `
-          ::-webkit-scrollbar { width: 4px; }
-          ::-webkit-scrollbar-track { background: transparent; }
-          ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-          ::-webkit-scrollbar-thumb:hover { background: #aaa; }
-        `}} />
-      )}
       {/* Cyberpunk Scanline & Grid Overlay */}
       {isCyber && (
         <>
