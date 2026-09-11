@@ -1,11 +1,6 @@
 import type {NextConfig} from 'next';
 
-if (process.argv.some((arg) => arg.includes('build'))) {
-  (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
-}
-
 const nextConfig: NextConfig = {
-  output: 'standalone',
   reactStrictMode: false,
   eslint: {
     ignoreDuringBuilds: true,
