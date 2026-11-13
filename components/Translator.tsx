@@ -3899,7 +3899,7 @@ const Translator = () => {
                             type="text"
                             value={githubRepoInput}
                             onChange={(e) => setGithubRepoInput(e.target.value)}
-                            placeholder="aungko00/me-translator"
+                            placeholder="aungko00/English-Myanmar-Translator"
                             className={cn(
                               "flex-1 px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-mono focus:outline-none",
                               isCyber
