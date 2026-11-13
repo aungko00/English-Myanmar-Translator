@@ -11,6 +11,9 @@ export interface DownloadProgressEvent {
 export interface AppInstallerPlugin {
   canRequestPackageInstalls(): Promise<{ granted: boolean }>;
   openInstallPermissionSettings(): Promise<void>;
+  hasAudioPermission(): Promise<{ state: 'granted' | 'denied' | 'prompt' }>;
+  requestAudioPermission(): Promise<{ state: 'granted' | 'denied' | 'prompt' }>;
+  openAppSettings(): Promise<void>;
   downloadAndInstallApk(options: {
     url: string;
     filename: string;

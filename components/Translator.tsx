@@ -8,6 +8,7 @@ import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { encryptSensitiveData, decryptSensitiveData } from '@/lib/crypto'
 import { readClipboardText } from '@/lib/clipboard'
+import { AppInstaller } from '@/lib/android-installer'
 import AppUpdateDialog from '@/components/AppUpdateDialog'
 import { usePWAInstall } from '@/hooks/usePWAInstall'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
@@ -473,6 +474,7 @@ const TRANSLATIONS = {
     pasteTooltip: 'Paste from clipboard',
     clearKeyTooltip: 'Clear Key',
     pasteBlockedAlert: '⚠️ Direct clipboard paste was blocked by browser. Please use keyboard shortcut Ctrl+V or long-press on mobile.',
+    pasteEmptyAlert: 'Clipboard is currently empty. Copy your API key or text first, then tap Paste.',
     storageEncryptionNote: 'Stored and protected locally on your device with Web Crypto (AES-GCM).',
     
     // Gemini Guide Card
@@ -495,7 +497,15 @@ const TRANSLATIONS = {
     permissionsTitle: 'Device & System Permissions',
     micTitle: 'Microphone',
     clipTitle: 'Clipboard Paste',
-    triggerButtonText: 'Trigger Permission Prompt',
+    triggerButtonText: 'Request All Permissions',
+    openAppSettingsBtn: 'Open Android App Settings',
+    permReadyMsg: 'Both Microphone and Clipboard permissions are ready.',
+    permMicBlockedMsg: 'Microphone is blocked. Allow it in Android App Settings or your browser site settings.',
+    permClipBlockedMsg: 'Browser blocked automatic clipboard reading. Allow Clipboard in Site Settings or long-press the input box to paste.',
+    faqTitleAndroid: 'Android App Permissions Guide',
+    faqDescAndroid: 'Microphone access enables voice typing, and Clipboard Paste lets you paste keys or sentences with one tap.',
+    solution1Android: '1. Tap either permission above or "Request All Permissions" to allow access.',
+    solution2Android: '2. If Microphone stays blocked, tap "Open Android App Settings" → Permissions → Allow Microphone.',
     faqTitle: '💡 How to avoid repeated permission prompts in AI Studio?',
     faqDesc: 'Due to security policies in Google AI Studio preview iframes, access requests for Microphone and Clipboard may be prompted on each page reload.',
     solutionsTitle: 'Solutions:',
@@ -611,6 +621,7 @@ const TRANSLATIONS = {
     pasteTooltip: 'Clipboard မှ ကူးယူထည့်သွင်းမည်',
     clearKeyTooltip: 'Key ဖျက်ပစ်မည်',
     pasteBlockedAlert: '⚠️ Browser က direct paste လုပ်ခွင့် မပေးထားပါ။ Keyboard က Ctrl+V (သို့မဟုတ်) ဖုန်းတွင် Long Press လုပ်ပြီး Paste လုပ်ပေးပါ။',
+    pasteEmptyAlert: 'Clipboard ထဲတွင် ကူးယူထားသော စာသား မရှိသေးပါ။ Key သို့မဟုတ် စာသားကို အရင် Copy ကူးပြီးမှ Paste နှိပ်ပါ။',
     storageEncryptionNote: 'Web Crypto (AES-GCM) ဖြင့် စက်တွင်း၌ လုံခြုံစွာ Encrypt ပြုလုပ်ထားပါသည်။',
     
     // Gemini Guide Card
@@ -633,7 +644,15 @@ const TRANSLATIONS = {
     permissionsTitle: 'စက်တွင်းနှင့် စနစ်ခွင့်ပြုချက်များ',
     micTitle: 'မိုက်ခရိုဖုန်း အသံသွင်းခွင့်ပြုချက်',
     clipTitle: 'ကူးယူစာသား ဖတ်ရှုခွင့်ပြုချက်',
-    triggerButtonText: 'ခွင့်ပြုချက် တောင်းခံမည်',
+    triggerButtonText: 'ခွင့်ပြုချက်အားလုံး တောင်းခံမည်',
+    openAppSettingsBtn: 'Android App Settings ဖွင့်မည်',
+    permReadyMsg: 'မိုက်ခရိုဖုန်းနှင့် Clipboard ခွင့်ပြုချက်များ အသင့်ဖြစ်နေပါပြီ။',
+    permMicBlockedMsg: 'မိုက်ခရိုဖုန်း ခွင့်ပြုချက် ပိတ်ထားပါသည်။ ဖုန်း App Settings (သို့မဟုတ် Browser Site Settings) တွင် Allow ပြန်ဖွင့်ပေးပါ။',
+    permClipBlockedMsg: 'Browser က အလိုအလျောက် Clipboard ဖတ်ခွင့် ပိတ်ထားပါသည်။ Site Settings တွင် Clipboard Allow ဖွင့်ပါ (သို့မဟုတ်) Input Box ကို ဖိထားပြီး Paste နှိပ်ပါ။',
+    faqTitleAndroid: 'Android App ခွင့်ပြုချက် လမ်းညွှန်',
+    faqDescAndroid: 'အသံဖြင့် စာရိုက်ရန် မိုက်ခရိုဖုန်းခွင့်ပြုချက် လိုအပ်ပြီး API Key နှင့် စာသားများကို တစ်ချက်နှိပ် Paste လုပ်ရန် Clipboard စနစ် ပါဝင်ပါသည်။',
+    solution1Android: '၁။ အပေါ်ရှိ မိုက်ခရိုဖုန်း / Clipboard ခလုတ် သို့မဟုတ် "ခွင့်ပြုချက်အားလုံး တောင်းခံမည်" ကို နှိပ်ပါ။',
+    solution2Android: '၂။ ပိတ်ထားမိပါက "Android App Settings ဖွင့်မည်" ကိုနှိပ်ပြီး Permissions → Microphone ကို Allow ပေးပါ။',
     faqTitle: '💡 Permission Modal အမြဲတမ်း ပေါ်မနေအောင် ဘယ်လိုလုပ်ရမလဲ?',
     faqDesc: 'Google AI Studio Preview (iframe) ၏ လုံခြုံရေးမူဝါဒအရ page load လုပ်တိုင်း သို့မဟုတ် reload လုပ်တိုင်း Microphone နှင့် Clipboard သုံးစွဲခွင့်ကို အတည်ပြုရန် ခွင့်ပြုချက်တောင်းခံလွှာ ထပ်ကာထပ်ကာ တောင်းလေ့ရှိသည်။',
     solutionsTitle: 'ဖြေရှင်းနည်းများ:',
@@ -853,12 +872,23 @@ const Translator = () => {
   const [updateStatusMsg, setUpdateStatusMsg] = useState<string | null>(null)
   const [showIosInstallGuide, setShowIosInstallGuide] = useState(false)
 
+  const [pasteAlertMsg, setPasteAlertMsg] = useState<string | null>(null)
   const [micPermission, setMicPermission] = useState<PermissionState | 'unknown'>('unknown')
   const [clipboardPermission, setClipboardPermission] = useState<PermissionState | 'unknown'>('unknown')
+  const [permissionFeedback, setPermissionFeedback] = useState<string | null>(null)
 
   const checkPermissions = useCallback(async () => {
     if (isRunningInsideCapacitor()) {
       setClipboardPermission('granted')
+      try {
+        const audioPerm = await AppInstaller.hasAudioPermission()
+        if (audioPerm?.state) {
+          setMicPermission(audioPerm.state)
+        }
+      } catch {
+        // Fallback to web permissions query below
+      }
+      return
     }
     if (typeof navigator === 'undefined' || !navigator.permissions) return
     try {
@@ -868,16 +898,54 @@ const Translator = () => {
     } catch (e) {
       console.warn('Microphone permission query not supported', e)
     }
-    if (!isRunningInsideCapacitor()) {
-      try {
-        const clip = await navigator.permissions.query({ name: 'clipboard-read' as any })
-        setClipboardPermission(clip.state)
-        clip.onchange = () => setClipboardPermission(clip.state)
-      } catch (e) {
-        console.warn('Clipboard permission query not supported', e)
-      }
+    try {
+      const clip = await navigator.permissions.query({ name: 'clipboard-read' as any })
+      setClipboardPermission(clip.state)
+      clip.onchange = () => setClipboardPermission(clip.state)
+    } catch (e) {
+      console.warn('Clipboard permission query not supported', e)
     }
   }, [])
+
+  const requestMicPermission = useCallback(async (): Promise<PermissionState> => {
+    if (isRunningInsideCapacitor()) {
+      try {
+        const res = await AppInstaller.requestAudioPermission()
+        setMicPermission(res.state)
+        return res.state
+      } catch {
+        // Fall through to getUserMedia prompt
+      }
+    }
+    try {
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        stream.getTracks().forEach(track => track.stop())
+        setMicPermission('granted')
+        return 'granted'
+      }
+    } catch {
+      setMicPermission('denied')
+      return 'denied'
+    }
+    await checkPermissions()
+    return micPermission === 'granted' ? 'granted' : 'prompt'
+  }, [checkPermissions, micPermission])
+
+  const requestClipboardAccess = useCallback(async (): Promise<PermissionState> => {
+    if (isRunningInsideCapacitor()) {
+      setClipboardPermission('granted')
+      return 'granted'
+    }
+    try {
+      await readClipboardText()
+      setClipboardPermission('granted')
+      return 'granted'
+    } catch {
+      await checkPermissions()
+      return 'denied'
+    }
+  }, [checkPermissions])
 
   useEffect(() => {
     checkPermissions()
@@ -2584,7 +2652,7 @@ const Translator = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className={cn(
-                "relative w-full max-w-lg flex flex-col rounded-2xl border shadow-2xl z-10 transition-all duration-500 max-h-[90vh] overflow-hidden",
+                "relative w-full max-w-lg flex flex-col rounded-2xl border shadow-2xl z-10 transition-all duration-500 max-h-[86dvh] overflow-hidden",
                 isCyber 
                   ? "bg-black border-[#00f2ff] shadow-[0_0_50px_rgba(0,242,255,0.4)] font-mono" 
                   : isGlass
@@ -2654,7 +2722,7 @@ const Translator = () => {
               </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6 pt-0 space-y-8 scrollbar-thin scrollbar-thumb-white/10">
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 pt-0 pb-6 space-y-8 scrollbar-thin scrollbar-thumb-white/10">
                 <div className="min-h-[350px]">
                   {activeSettingsTab === 'appearance' && (
                   <motion.div 
@@ -3503,10 +3571,16 @@ const Translator = () => {
                                               updateStaged('groqApiKey', cleaned);
                                             }
                                             setPasteError(false);
+                                            setPasteAlertMsg(null);
+                                          } else {
+                                            setPasteAlertMsg(tSettings.pasteEmptyAlert);
+                                            setPasteError(true);
+                                            setTimeout(() => setPasteError(false), 4000);
                                           }
                                         } catch (err) {
                                           console.warn("Failed to paste:", err);
                                           apiKeyInputRef.current?.focus();
+                                          setPasteAlertMsg(tSettings.pasteBlockedAlert);
                                           setPasteError(true);
                                           setTimeout(() => setPasteError(false), 5000);
                                         }
@@ -3563,7 +3637,7 @@ const Translator = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="text-[10px] text-amber-500 font-medium mt-1"
                               >
-                                {tSettings.pasteBlockedAlert}
+                                {pasteAlertMsg || tSettings.pasteBlockedAlert}
                               </motion.p>
                             )}
                             <p className={cn(
@@ -3689,19 +3763,31 @@ const Translator = () => {
                         </h4>
                       </div>
 
-                      {/* Current Status List */}
+                      {/* Current Status List (Interactive rows) */}
                       <div className="space-y-3">
                         <div className={cn(
-                          "p-4 rounded-xl border flex flex-col gap-3 transition-all",
+                          "p-3 sm:p-4 rounded-xl border flex flex-col gap-2.5 transition-all",
                           isCyber ? "bg-black border-[#00f2ff]/30" : currentTheme.isDark ? "bg-white/5 border-white/10" : "bg-white border-[#dcdcd0] shadow-sm"
                         )}>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Mic className={cn("w-4 h-4", isCyber ? "text-[#00f2ff]" : currentTheme.isDark ? "text-indigo-400" : "text-[#5A5A40]")} />
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setPermissionFeedback(null);
+                              const state = await requestMicPermission();
+                              if (state === 'denied') {
+                                setPermissionFeedback(tSettings.permMicBlockedMsg);
+                              } else if (state === 'granted' && clipboardPermission === 'granted') {
+                                setPermissionFeedback(tSettings.permReadyMsg);
+                              }
+                            }}
+                            className="w-full min-h-[44px] flex items-center justify-between gap-3 text-left rounded-lg px-2 py-1.5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Mic className={cn("w-4 h-4 shrink-0", isCyber ? "text-[#00f2ff]" : currentTheme.isDark ? "text-indigo-400" : "text-[#5A5A40]")} />
                               <span className={cn("text-sm font-bold", currentTheme.isDark ? "text-gray-200" : "text-gray-900")}>{tSettings.micTitle}</span>
                             </div>
                             <span className={cn(
-                              "text-xs px-2.5 py-1 rounded-full font-bold uppercase border",
+                              "text-xs px-3 py-1.5 rounded-full font-bold uppercase border shrink-0 transition-transform active:scale-95",
                               micPermission === 'granted'
                                 ? currentTheme.isDark ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" : "bg-emerald-50 text-emerald-700 border-emerald-300"
                                 : micPermission === 'denied'
@@ -3710,15 +3796,27 @@ const Translator = () => {
                             )}>
                               {micPermission === 'granted' ? tSettings.micAllowed : micPermission === 'denied' ? tSettings.micBlocked : tSettings.tapToAsk}
                             </span>
-                          </div>
+                          </button>
 
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <ClipboardPaste className={cn("w-4 h-4", isCyber ? "text-[#00f2ff]" : currentTheme.isDark ? "text-indigo-400" : "text-[#5A5A40]")} />
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setPermissionFeedback(null);
+                              const state = await requestClipboardAccess();
+                              if (state === 'denied') {
+                                setPermissionFeedback(tSettings.permClipBlockedMsg);
+                              } else if (state === 'granted' && micPermission === 'granted') {
+                                setPermissionFeedback(tSettings.permReadyMsg);
+                              }
+                            }}
+                            className="w-full min-h-[44px] flex items-center justify-between gap-3 text-left rounded-lg px-2 py-1.5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <ClipboardPaste className={cn("w-4 h-4 shrink-0", isCyber ? "text-[#00f2ff]" : currentTheme.isDark ? "text-indigo-400" : "text-[#5A5A40]")} />
                               <span className={cn("text-sm font-bold", currentTheme.isDark ? "text-gray-200" : "text-gray-900")}>{tSettings.clipTitle}</span>
                             </div>
                             <span className={cn(
-                              "text-xs px-2.5 py-1 rounded-full font-bold uppercase border",
+                              "text-xs px-3 py-1.5 rounded-full font-bold uppercase border shrink-0 transition-transform active:scale-95",
                               clipboardPermission === 'granted'
                                 ? currentTheme.isDark ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" : "bg-emerald-50 text-emerald-700 border-emerald-300"
                                 : clipboardPermission === 'denied'
@@ -3727,26 +3825,26 @@ const Translator = () => {
                             )}>
                               {clipboardPermission === 'granted' ? tSettings.micAllowed : clipboardPermission === 'denied' ? tSettings.micBlocked : tSettings.tapToAsk}
                             </span>
-                          </div>
+                          </button>
                         </div>
 
-                        {/* Ask Permission Button */}
+                        {/* Request All Permissions Button */}
                         <button
                           type="button"
                           onClick={async () => {
-                            try {
-                              if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
-                                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                                stream.getTracks().forEach(track => track.stop());
-                              }
-                              await checkPermissions();
-                            } catch (e) {
-                              console.warn('Microphone permission request not granted or unsupported:', e);
-                              await checkPermissions();
+                            setPermissionFeedback(null);
+                            const micRes = await requestMicPermission();
+                            const clipRes = await requestClipboardAccess();
+                            if (micRes === 'granted' && clipRes === 'granted') {
+                              setPermissionFeedback(tSettings.permReadyMsg);
+                            } else if (micRes === 'denied') {
+                              setPermissionFeedback(tSettings.permMicBlockedMsg);
+                            } else if (clipRes === 'denied') {
+                              setPermissionFeedback(tSettings.permClipBlockedMsg);
                             }
                           }}
                           className={cn(
-                            "w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border",
+                            "w-full min-h-[44px] py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border",
                             isCyber
                               ? "bg-black border-[#00f2ff] text-[#00f2ff] hover:bg-[#00f2ff] hover:text-black shadow-[0_0_15px_rgba(0,242,255,0.2)]"
                               : currentTheme.isDark
@@ -3756,6 +3854,34 @@ const Translator = () => {
                         >
                           {tSettings.triggerButtonText}
                         </button>
+
+                        {isRunningInsideCapacitor() && (
+                          <button
+                            type="button"
+                            onClick={() => AppInstaller.openAppSettings()}
+                            className={cn(
+                              "w-full min-h-[44px] py-2.5 rounded-xl text-xs font-bold border transition-colors",
+                              isCyber
+                                ? "border-[#00f2ff]/40 text-[#00f2ff] hover:bg-[#00f2ff]/10"
+                                : currentTheme.isDark
+                                  ? "border-white/15 bg-white/5 text-gray-200 hover:bg-white/10"
+                                  : "border-gray-300 bg-white text-gray-800 hover:bg-gray-100"
+                            )}
+                          >
+                            {tSettings.openAppSettingsBtn}
+                          </button>
+                        )}
+
+                        {permissionFeedback && (
+                          <div className={cn(
+                            "p-3 rounded-xl border text-xs leading-relaxed",
+                            currentTheme.isDark
+                              ? "bg-white/5 border-white/10 text-gray-200"
+                              : "bg-gray-50 border-gray-200 text-gray-800"
+                          )}>
+                            {permissionFeedback}
+                          </div>
+                        )}
                       </div>
 
                       {/* Explanation Details */}
@@ -3767,24 +3893,47 @@ const Translator = () => {
                             ? "bg-black/20 border-white/5 text-gray-300" 
                             : "bg-[#f5f5f0] border-[#d8d8cc] text-[#2c2c2c] shadow-sm"
                       )}>
-                        <div>
-                          <p className={cn("font-bold mb-1 text-sm", currentTheme.isDark ? "text-amber-400" : "text-amber-800")}>
-                            {tSettings.faqTitle}
-                          </p>
-                          <p className={cn("mb-2", currentTheme.isDark ? "text-gray-400" : "text-gray-700")}>
-                            {tSettings.faqDesc}
-                          </p>
-                        </div>
+                        {isRunningInsideCapacitor() ? (
+                          <>
+                            <div>
+                              <p className={cn("font-bold mb-1 text-sm", currentTheme.isDark ? "text-emerald-400" : "text-emerald-800")}>
+                                {tSettings.faqTitleAndroid}
+                              </p>
+                              <p className={cn("mb-2", currentTheme.isDark ? "text-gray-400" : "text-gray-700")}>
+                                {tSettings.faqDescAndroid}
+                              </p>
+                            </div>
+                            <div className="space-y-1">
+                              <p className={cn("pl-1", currentTheme.isDark ? "text-gray-400" : "text-gray-700")}>
+                                {tSettings.solution1Android}
+                              </p>
+                              <p className={cn("pl-1", currentTheme.isDark ? "text-gray-400" : "text-gray-700")}>
+                                {tSettings.solution2Android}
+                              </p>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <p className={cn("font-bold mb-1 text-sm", currentTheme.isDark ? "text-amber-400" : "text-amber-800")}>
+                                {tSettings.faqTitle}
+                              </p>
+                              <p className={cn("mb-2", currentTheme.isDark ? "text-gray-400" : "text-gray-700")}>
+                                {tSettings.faqDesc}
+                              </p>
+                            </div>
 
-                        <div className="space-y-1">
-                          <p className={cn("font-bold", currentTheme.isDark ? "text-gray-200" : "text-gray-900")}>{tSettings.solutionsTitle}</p>
-                          <p className={cn("pl-3", currentTheme.isDark ? "text-gray-400" : "text-gray-700")}>
-                            {tSettings.solution1}
-                          </p>
-                          <p className={cn("pl-3", currentTheme.isDark ? "text-gray-400" : "text-gray-700")}>
-                            {tSettings.solution2}
-                          </p>
-                        </div>
+                            <div className="space-y-1">
+                              <p className={cn("font-bold", currentTheme.isDark ? "text-gray-200" : "text-gray-900")}>{tSettings.solutionsTitle}</p>
+                              <p className={cn("pl-3", currentTheme.isDark ? "text-gray-400" : "text-gray-700")}>
+                                {tSettings.solution1}
+                              </p>
+                              <p className={cn("pl-3", currentTheme.isDark ? "text-gray-400" : "text-gray-700")}>
+                                {tSettings.solution2}
+                              </p>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
 

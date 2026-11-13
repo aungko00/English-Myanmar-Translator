@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { APP_VERSION, DEFAULT_GITHUB_REPO } from '@/lib/app-config';
 
 export { APP_VERSION, DEFAULT_GITHUB_REPO };
@@ -90,6 +91,11 @@ export function formatBytes(bytes: number): string {
 
 export function isRunningInsideCapacitor(): boolean {
   if (typeof window === 'undefined') return false;
+  try {
+    if (Capacitor.isNativePlatform()) return true;
+  } catch {
+    // Fallback below
+  }
   const win = window as unknown as {
     Capacitor?: { isNativePlatform?: () => boolean };
   };

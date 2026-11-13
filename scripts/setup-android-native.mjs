@@ -95,6 +95,7 @@ fs.mkdirSync(javaPkgDir, { recursive: true });
 
 const pluginJava = `package com.metranslator.app;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -103,10 +104,13 @@ import android.os.SystemClock;
 import android.provider.Settings;
 import androidx.core.content.FileProvider;
 import com.getcapacitor.JSObject;
+import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -116,9 +120,60 @@ import java.net.URL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-@CapacitorPlugin(name = "AppInstaller")
+@CapacitorPlugin(
+    name = "AppInstaller",
+    permissions = {
+        @Permission(strings = { Manifest.permission.RECORD_AUDIO }, alias = "microphone")
+    }
+)
 public class AppInstallerPlugin extends Plugin {
     private static final ExecutorService DOWNLOAD_EXECUTOR = Executors.newSingleThreadExecutor();
+
+    private String mapPermissionState(PermissionState state) {
+        if (state == PermissionState.GRANTED) {
+            return "granted";
+        }
+        if (state == PermissionState.DENIED) {
+            return "denied";
+        }
+        return "prompt";
+    }
+
+    @PluginMethod
+    public void hasAudioPermission(PluginCall call) {
+        JSObject result = new JSObject();
+        result.put("state", mapPermissionState(getPermissionState("microphone")));
+        call.resolve(result);
+    }
+
+    @PluginMethod
+    public void requestAudioPermission(PluginCall call) {
+        if (getPermissionState("microphone") == PermissionState.GRANTED) {
+            JSObject result = new JSObject();
+            result.put("state", "granted");
+            call.resolve(result);
+            return;
+        }
+        requestPermissionForAlias("microphone", call, "audioPermissionCallback");
+    }
+
+    @PermissionCallback
+    private void audioPermissionCallback(PluginCall call) {
+        JSObject result = new JSObject();
+        result.put("state", mapPermissionState(getPermissionState("microphone")));
+        call.resolve(result);
+    }
+
+    @PluginMethod
+    public void openAppSettings(PluginCall call) {
+        Intent intent = new Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.parse("package:" + getContext().getPackageName())
+        );
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(intent);
+        call.resolve();
+    }
 
     private boolean hasInstallPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
