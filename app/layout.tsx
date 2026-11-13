@@ -1,4 +1,4 @@
-import type {Metadata} from 'next';
+import type { Metadata, Viewport } from 'next';
 import { 
   Inter, 
   JetBrains_Mono, 
@@ -10,8 +10,7 @@ import {
   Playfair_Display, 
   Merriweather, 
   Ubuntu, 
-  Poppins,
-  Noto_Sans_Myanmar
+  Poppins
 } from 'next/font/google'
 import './globals.css'; // Global styles
 
@@ -26,11 +25,35 @@ const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfa
 const merriweather = Merriweather({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-merriweather' })
 const ubuntu = Ubuntu({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-ubuntu' })
 const poppins = Poppins({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-poppins' })
-const notoMyanmar = Noto_Sans_Myanmar({ weight: ['400', '700'], subsets: ['myanmar'], variable: '--font-noto-myanmar' })
+
+export const viewport: Viewport = {
+  themeColor: '#10b981',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
 
 export const metadata: Metadata = {
   title: 'ME Translator',
   description: 'A ChatGPT-style translator for English and Myanmar languages with Cyberpunk theme support.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'ME Trans',
+  },
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
+  openGraph: {
+    title: 'ME Translator',
+    description: 'A ChatGPT-style translator for English and Myanmar languages with Cyberpunk theme support.',
+  },
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
@@ -47,7 +70,6 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
       ${merriweather.variable}
       ${ubuntu.variable}
       ${poppins.variable}
-      ${notoMyanmar.variable}
     `}>
       <body suppressHydrationWarning className="bg-[#212121] text-white font-sans">{children}</body>
     </html>

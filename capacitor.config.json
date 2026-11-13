@@ -1,0 +1,8 @@
+{
+  "appId": "com.metranslator.app",
+  "appName": "ME Translator",
+  "webDir": "out",
+  "android": {
+    "allowMixedContent": false
+  }
+}

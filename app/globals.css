@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@100;200;300;400;500;600;700;800;900&family=Noto+Serif+Myanmar:wght@200;300;400;500;600;700;800;900&family=Padauk:wght@400;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -13,7 +14,52 @@
   --font-merriweather: var(--font-merriweather);
   --font-ubuntu: var(--font-ubuntu);
   --font-poppins: var(--font-poppins);
-  --font-noto-myanmar: var(--font-noto-myanmar);
+  --font-mm-noto-sans: 'Noto Sans Myanmar', sans-serif;
+  --font-mm-noto-serif: 'Noto Serif Myanmar', serif;
+  --font-mm-padauk: 'Padauk', sans-serif;
+}
+
+/* Distinctive & Diverse Myanmar Font Stylings */
+.font-mm-serif-elegant {
+  font-family: 'Noto Serif Myanmar', serif !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.015em;
+}
+
+.font-mm-headline-gothic {
+  font-family: 'Noto Sans Myanmar', sans-serif !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.025em;
+}
+
+.font-mm-square-modern {
+  font-family: 'Noto Sans Myanmar', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.035em;
+  word-spacing: 0.05em;
+}
+
+.font-mm-ultra-light {
+  font-family: 'Noto Sans Myanmar', sans-serif !important;
+  font-weight: 200 !important;
+  letter-spacing: 0.04em;
+}
+
+.font-mm-padauk-bold {
+  font-family: 'Padauk', sans-serif !important;
+  font-weight: 700 !important;
+}
+
+.font-mm-novel-serif {
+  font-family: 'Noto Serif Myanmar', serif !important;
+  font-weight: 400 !important;
+  line-height: 1.85;
+  letter-spacing: 0.01em;
+}
+
+.font-mm-sans-clean {
+  font-family: 'Noto Sans Myanmar', sans-serif !important;
+  font-weight: 400 !important;
 }
 
 ::-webkit-scrollbar {

@@ -1,8 +1,17 @@
 import type {NextConfig} from 'next';
 
+const isDev = process.env.NODE_ENV !== 'production';
+const isCapacitorBuild = process.env.CAPACITOR_BUILD === 'true';
+
 const nextConfig: NextConfig = {
-  output: 'standalone',
+  distDir: isDev ? '.next-dev' : '.next',
+  output: isCapacitorBuild ? 'export' : isDev ? undefined : 'standalone',
+  trailingSlash: isCapacitorBuild ? true : false,
   reactStrictMode: false,
+  devIndicators: false,
+  experimental: {
+    devtoolSegmentExplorer: false,
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -11,6 +20,7 @@ const nextConfig: NextConfig = {
   },
   // Allow access to remote image placeholder.
   images: {
+    unoptimized: isCapacitorBuild ? true : false,
     remotePatterns: [
       {
         protocol: 'https',
@@ -22,6 +32,9 @@ const nextConfig: NextConfig = {
   },
 
   webpack: (config, {dev}) => {
+    if (!dev) {
+      config.cache = false;
+    }
     // HMR is disabled in AI Studio via DISABLE_HMR env var.
     // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
     if (dev && process.env.DISABLE_HMR === 'true') {
