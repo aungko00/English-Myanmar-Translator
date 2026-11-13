@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { encryptSensitiveData, decryptSensitiveData } from '@/lib/crypto'
+import { readClipboardText } from '@/lib/clipboard'
 import AppUpdateDialog from '@/components/AppUpdateDialog'
 import { usePWAInstall } from '@/hooks/usePWAInstall'
 import { useOnlineStatus } from '@/hooks/useOnlineStatus'
@@ -17,7 +18,6 @@ import {
   getConfiguredGithubRepo,
   getSkippedUpdateVersion,
   isRunningInsideCapacitor,
-  setConfiguredGithubRepo,
 } from '@/lib/app-update'
 
 function cn(...inputs: ClassValue[]) {
@@ -531,26 +531,21 @@ const TRANSLATIONS = {
     lockedKeyNote: 'Write-only vault: full key cannot be viewed after encryption.',
     swapDirection: 'Switch Translation Direction',
     autoDirectionHint: 'Auto-detects English ↔ Myanmar',
-    appUpdatesTitle: 'Android App & GitHub Updates',
+    appUpdatesTitle: 'App Updates & Version',
     currentVersionLabel: 'Installed Version',
-    githubRepoLabel: 'GitHub Repository (owner/repo)',
-    githubRepoHint: 'Checks GitHub Releases automatically on startup whenever you push an update.',
+    autoUpdateInfo: 'New versions are checked automatically when you open the app, or tap the button above anytime.',
     checkForUpdates: 'Check for Updates',
-    checkingUpdates: 'Checking GitHub...',
-    upToDateMsg: (ver: string) => `You are running the latest version (v${ver}).`,
-    noReleasesMsg: 'No GitHub Releases published yet for this repository.',
-    updateCheckFailed: (err: string) => `Could not check updates (${err}).`,
+    checkingUpdates: 'Checking for updates...',
+    upToDateMsg: (ver: string) => `You are using the latest version (v${ver}).`,
+    noReleasesMsg: 'No newer updates are available yet.',
+    updateCheckFailed: (err: string) => `Could not check for updates (${err}).`,
     updateAvailableBanner: (ver: string) => `Update Ready: v${ver}`,
+    installUpdateNow: 'Download & Install Update',
     installAndroidApp: 'Install App on Device',
     installPwaDesc: 'Install ME Translator to your home screen for a native full-screen experience.',
     iosInstallTitle: 'Install on iPhone / iPad',
     iosInstallSteps: '1. Tap the Share button in Safari.\n2. Scroll down and tap "Add to Home Screen".',
     offlineBanner: 'Offline Mode — History & saved chats remain available.',
-    saveRepoBtn: 'Save Repo',
-    repoSavedMsg: 'Repository saved.',
-    exportZipTitle: 'GitHub & Android APK Source Bundle',
-    exportZipDesc: 'Download the clean source ZIP (with GitHub Actions APK workflow, Capacitor config, and zero secrets) to upload to GitHub via Cue AI or Git.',
-    exportZipBtn: 'Download Project ZIP (For GitHub / APK)'
   },
   my: {
     appTitle: 'ME ဘာသာပြန်စနစ်',
@@ -674,26 +669,21 @@ const TRANSLATIONS = {
     lockedKeyNote: 'လုံခြုံရေးအရ သိမ်းပြီးသော Key ကို ပြန်ကြည့်၍ မရပါ (နောက်ဆုံး ၄ လုံးသာ ပြသမည်)။',
     swapDirection: 'ဘာသာစကား ဦးတည်ချက် ပြောင်းမည်',
     autoDirectionHint: 'English ↔ Myanmar အလိုအလျောက် စစ်ဆေးပေးသည်',
-    appUpdatesTitle: 'Android App နှင့် GitHub Update စနစ်',
+    appUpdatesTitle: 'App Update နှင့် ဗားရှင်း',
     currentVersionLabel: 'လက်ရှိ App ဗားရှင်း',
-    githubRepoLabel: 'GitHub Repository (owner/repo)',
-    githubRepoHint: 'သင် GitHub Repo သို့ Code အသစ် Push တင်ပြီး Release ထုတ်တိုင်း App ထဲတွင် အလိုအလျောက် စစ်ဆေးပြသပေးပါမည်။',
+    autoUpdateInfo: 'App ဗားရှင်းအသစ် ထွက်ရှိလာပါက App စဖွင့်ချိန်တွင် အလိုအလျောက် စစ်ဆေးအသိပေးပေးပါမည်။ အချိန်မရွေးလည်း အထက်ပါခလုတ်မှ စစ်ဆေးနိုင်ပါသည်။',
     checkForUpdates: 'Update အသစ် စစ်ဆေးမည်',
-    checkingUpdates: 'GitHub တွင် စစ်ဆေးနေသည်...',
+    checkingUpdates: 'Update အသစ် စစ်ဆေးနေသည်...',
     upToDateMsg: (ver: string) => `နောက်ဆုံးထွက် ဗားရှင်း (v${ver}) ကို အသုံးပြုနေပါသည်။`,
-    noReleasesMsg: 'ဤ Repository တွင် Release အသစ် မထုတ်ရသေးပါ။',
+    noReleasesMsg: 'လောလောဆယ် Update အသစ် မထွက်ရှိသေးပါ။',
     updateCheckFailed: (err: string) => `Update စစ်ဆေး၍ မရပါ (${err})။`,
-    updateAvailableBanner: (ver: string) => `Update အသစ်ရှိသည်: v${ver}`,
+    updateAvailableBanner: (ver: string) => `ဗားရှင်းအသစ် ရရှိနိုင်ပါပြီ: v${ver}`,
+    installUpdateNow: 'Update ကို Download ဆွဲ၍ Install လုပ်မည်',
     installAndroidApp: 'ဖုန်းတွင် App အဖြစ် Install လုပ်မည်',
     installPwaDesc: 'ME Translator ကို ဖုန်း Home Screen ပေါ်တွင် App အဖြစ် Install လုပ်၍ အသုံးပြုနိုင်ပါသည်။',
     iosInstallTitle: 'iPhone / iPad တွင် Install လုပ်နည်း',
     iosInstallSteps: '၁။ Safari ရှိ Share ခလုတ်ကို နှိပ်ပါ။\n၂။ အောက်သို့ဆွဲပြီး "Add to Home Screen" ကို ရွေးပါ။',
     offlineBanner: 'အင်တာနက် ချိတ်ဆက်မှု မရှိပါ — မှတ်တမ်းဟောင်းများကို ဆက်လက်ကြည့်ရှုနိုင်ပါသည်။',
-    saveRepoBtn: 'Repo သိမ်းမည်',
-    repoSavedMsg: 'Repository သိမ်းဆည်းပြီးပါပြီ။',
-    exportZipTitle: 'GitHub & Android APK Project ZIP',
-    exportZipDesc: 'Cue AI Agent သို့မဟုတ် Git ဖြင့် GitHub သို့ တင်နိုင်ရန် API Key / Secret များ မပါဝင်သော Project Code ZIP ဖိုင်ကို တိုက်ရိုက် Download ဆွဲယူနိုင်ပါသည်။',
-    exportZipBtn: 'GitHub / APK Project ZIP Download ဆွဲမည်'
   }
 }
 
@@ -861,13 +851,15 @@ const Translator = () => {
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false)
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false)
   const [updateStatusMsg, setUpdateStatusMsg] = useState<string | null>(null)
-  const [githubRepoInput, setGithubRepoInput] = useState('')
   const [showIosInstallGuide, setShowIosInstallGuide] = useState(false)
 
   const [micPermission, setMicPermission] = useState<PermissionState | 'unknown'>('unknown')
   const [clipboardPermission, setClipboardPermission] = useState<PermissionState | 'unknown'>('unknown')
 
   const checkPermissions = useCallback(async () => {
+    if (isRunningInsideCapacitor()) {
+      setClipboardPermission('granted')
+    }
     if (typeof navigator === 'undefined' || !navigator.permissions) return
     try {
       const mic = await navigator.permissions.query({ name: 'microphone' as any })
@@ -876,12 +868,14 @@ const Translator = () => {
     } catch (e) {
       console.warn('Microphone permission query not supported', e)
     }
-    try {
-      const clip = await navigator.permissions.query({ name: 'clipboard-read' as any })
-      setClipboardPermission(clip.state)
-      clip.onchange = () => setClipboardPermission(clip.state)
-    } catch (e) {
-      console.warn('Clipboard permission query not supported', e)
+    if (!isRunningInsideCapacitor()) {
+      try {
+        const clip = await navigator.permissions.query({ name: 'clipboard-read' as any })
+        setClipboardPermission(clip.state)
+        clip.onchange = () => setClipboardPermission(clip.state)
+      } catch (e) {
+        console.warn('Clipboard permission query not supported', e)
+      }
     }
   }, [])
 
@@ -915,6 +909,7 @@ const Translator = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const apiKeyInputRef = useRef<HTMLInputElement>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
   const recognitionRef = useRef<any>(null)
 
@@ -1094,9 +1089,8 @@ const Translator = () => {
       }
     })()
 
-    // Check GitHub Releases automatically on launch for in-app updates
+    // Check for newer app releases automatically on launch
     const configuredRepo = getConfiguredGithubRepo()
-    setGithubRepoInput(configuredRepo)
     const updateTimer = setTimeout(async () => {
       const info = await checkForGitHubUpdate(configuredRepo)
       setUpdateInfo(info)
@@ -2103,13 +2097,15 @@ const Translator = () => {
                 type="button"
                 onClick={async () => {
                   try {
-                    const text = await navigator.clipboard.readText()
-                    setInput(prev => prev + text)
-                    if (textareaRef.current) {
-                      textareaRef.current.focus()
-                      // Trigger height adjustment
-                      const event = new Event('input', { bubbles: true })
-                      textareaRef.current.dispatchEvent(event)
+                    const text = await readClipboardText(textareaRef.current)
+                    if (text) {
+                      setInput(prev => prev + text)
+                      setPasteError(false)
+                      if (textareaRef.current) {
+                        textareaRef.current.focus()
+                        const event = new Event('input', { bubbles: true })
+                        textareaRef.current.dispatchEvent(event)
+                      }
                     }
                   } catch (err) {
                     console.error('Failed to paste:', err)
@@ -3471,6 +3467,7 @@ const Translator = () => {
                                 <div className="relative flex items-center gap-2">
                                   <div className="relative flex-1">
                                     <input
+                                      ref={apiKeyInputRef}
                                       type="password"
                                       autoComplete="new-password"
                                       value={stagedNewKey}
@@ -3497,17 +3494,19 @@ const Translator = () => {
                                       type="button"
                                       onClick={async () => {
                                         try {
-                                          const text = await navigator.clipboard.readText();
-                                          if (text) {
+                                          const rawText = await readClipboardText(apiKeyInputRef.current);
+                                          const cleaned = rawText.trim();
+                                          if (cleaned) {
                                             if (isGemini) {
-                                              updateStaged('geminiApiKey', text);
+                                              updateStaged('geminiApiKey', cleaned);
                                             } else {
-                                              updateStaged('groqApiKey', text);
+                                              updateStaged('groqApiKey', cleaned);
                                             }
                                             setPasteError(false);
                                           }
                                         } catch (err) {
                                           console.warn("Failed to paste:", err);
+                                          apiKeyInputRef.current?.focus();
                                           setPasteError(true);
                                           setTimeout(() => setPasteError(false), 5000);
                                         }
@@ -3847,11 +3846,9 @@ const Translator = () => {
                           type="button"
                           disabled={isCheckingUpdate}
                           onClick={async () => {
-                            const savedRepo = setConfiguredGithubRepo(githubRepoInput)
-                            setGithubRepoInput(savedRepo)
                             setIsCheckingUpdate(true)
                             setUpdateStatusMsg(null)
-                            const info = await checkForGitHubUpdate(savedRepo)
+                            const info = await checkForGitHubUpdate(getConfiguredGithubRepo())
                             setUpdateInfo(info)
                             setIsCheckingUpdate(false)
                             if (info.hasUpdate) {
@@ -3865,7 +3862,7 @@ const Translator = () => {
                             }
                           }}
                           className={cn(
-                            "px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 disabled:opacity-60",
+                            "min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 disabled:opacity-60",
                             isCyber
                               ? "bg-[#00f2ff] text-black hover:bg-[#00d8e6]"
                               : "bg-emerald-600 text-white hover:bg-emerald-700"
@@ -3875,6 +3872,34 @@ const Translator = () => {
                           <span>{isCheckingUpdate ? tSettings.checkingUpdates : tSettings.checkForUpdates}</span>
                         </button>
                       </div>
+
+                      {updateInfo?.hasUpdate && (
+                        <div className={cn(
+                          "p-4 rounded-xl border flex items-center justify-between gap-3",
+                          isCyber
+                            ? "bg-[#00f2ff]/10 border-[#00f2ff]/40 text-[#00f2ff]"
+                            : currentTheme.isDark
+                              ? "bg-emerald-500/15 border-emerald-500/35 text-emerald-200"
+                              : "bg-emerald-50 border-emerald-200 text-emerald-900"
+                        )}>
+                          <div className="text-xs font-bold tabular-nums">
+                            {tSettings.updateAvailableBanner(updateInfo.latestVersion)}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsUpdateDialogOpen(true)}
+                            className={cn(
+                              "min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors",
+                              isCyber
+                                ? "bg-[#00f2ff] text-black"
+                                : "bg-emerald-600 text-white hover:bg-emerald-700"
+                            )}
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>{tSettings.installUpdateNow}</span>
+                          </button>
+                        </div>
+                      )}
 
                       {updateStatusMsg && (
                         <div className={cn(
@@ -3887,110 +3912,12 @@ const Translator = () => {
                         </div>
                       )}
 
-                      <div className="space-y-2">
-                        <label className={cn(
-                          "text-[10px] font-bold uppercase tracking-wider block",
-                          isCyber ? "text-[#00f2ff]/60" : currentTheme.isDark ? "text-gray-400" : "text-gray-700 font-semibold"
-                        )}>
-                          {tSettings.githubRepoLabel}
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={githubRepoInput}
-                            onChange={(e) => setGithubRepoInput(e.target.value)}
-                            placeholder="aungko00/English-Myanmar-Translator"
-                            className={cn(
-                              "flex-1 px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-mono focus:outline-none",
-                              isCyber
-                                ? "bg-black border-[#00f2ff]/50 text-[#00f2ff]"
-                                : currentTheme.isDark
-                                  ? "bg-white/5 border-white/10 text-white"
-                                  : "bg-white border-gray-300 text-gray-900"
-                            )}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const saved = setConfiguredGithubRepo(githubRepoInput)
-                              setGithubRepoInput(saved)
-                              setUpdateStatusMsg(tSettings.repoSavedMsg)
-                            }}
-                            className={cn(
-                              "px-3.5 py-2.5 rounded-xl border text-xs font-bold shrink-0 transition-colors",
-                              isCyber
-                                ? "border-[#00f2ff] text-[#00f2ff] hover:bg-[#00f2ff]/10"
-                                : currentTheme.isDark
-                                  ? "border-white/15 bg-white/5 text-white hover:bg-white/10"
-                                  : "border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200"
-                            )}
-                          >
-                            {tSettings.saveRepoBtn}
-                          </button>
-                        </div>
-                        <p className="text-[11px] opacity-70 leading-relaxed">
-                          {tSettings.githubRepoHint}
-                        </p>
-                      </div>
-
-                      {!isRunningInsideCapacitor() && (
-                        <div className={cn(
-                          "p-4 rounded-xl border space-y-3",
-                          isCyber ? "bg-[#00f2ff]/5 border-[#00f2ff]/25" : currentTheme.isDark ? "bg-white/5 border-white/10" : "bg-gray-50 border-gray-200"
-                        )}>
-                          <div className="text-xs font-bold">{tSettings.exportZipTitle}</div>
-                          <p className="text-[11px] leading-relaxed opacity-80">
-                            {tSettings.exportZipDesc}
-                          </p>
-                          <a
-                            href="/api/export-project"
-                            download="ME-Translator-Android-GitHub.zip"
-                            className={cn(
-                              "w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all",
-                              isCyber
-                                ? "bg-[#00f2ff] text-black hover:bg-[#00d8e6]"
-                                : currentTheme.isDark
-                                  ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                                  : "bg-[#5A5A40] text-white hover:bg-[#474732]"
-                            )}
-                          >
-                            <Download className="w-4 h-4" />
-                            <span>{tSettings.exportZipBtn}</span>
-                          </a>
-                        </div>
-                      )}
-
-                      {!isInstalled && (isInstallable || isIOS) && (
-                        <div className={cn(
-                          "p-4 rounded-xl border space-y-3",
-                          isCyber ? "bg-[#00f2ff]/5 border-[#00f2ff]/25" : currentTheme.isDark ? "bg-white/5 border-white/10" : "bg-gray-50 border-gray-200"
-                        )}>
-                          <p className="text-xs leading-relaxed opacity-85">
-                            {tSettings.installPwaDesc}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              if (isInstallable) {
-                                await triggerPwaInstall()
-                              } else if (isIOS) {
-                                setShowIosInstallGuide(true)
-                              }
-                            }}
-                            className={cn(
-                              "w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all",
-                              isCyber
-                                ? "bg-[#00f2ff] text-black"
-                                : currentTheme.isDark
-                                  ? "bg-white/10 text-white hover:bg-white/20"
-                                  : "bg-gray-900 text-white hover:bg-gray-800"
-                            )}
-                          >
-                            <Smartphone className="w-4 h-4" />
-                            <span>{tSettings.installAndroidApp}</span>
-                          </button>
-                        </div>
-                      )}
+                      <p className={cn(
+                        "text-xs leading-relaxed px-1",
+                        currentTheme.isDark ? "text-gray-400" : "text-gray-600"
+                      )}>
+                        {tSettings.autoUpdateInfo}
+                      </p>
                     </div>
 
                     <div className="pt-4 border-t border-black/10 dark:border-white/10">

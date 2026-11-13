@@ -2,7 +2,7 @@ import { APP_VERSION, DEFAULT_GITHUB_REPO } from '@/lib/app-config';
 
 export { APP_VERSION, DEFAULT_GITHUB_REPO };
 
-const GITHUB_REPO_STORAGE_KEY = 'me_translator_github_repo';
+const LEGACY_REPO_STORAGE_KEY = 'me_translator_github_repo';
 const SKIPPED_VERSION_STORAGE_KEY = 'me_translator_skipped_update_version';
 
 export interface GitHubReleaseAsset {
@@ -55,25 +55,15 @@ export function compareVersions(a: string, b: string): number {
 }
 
 export function getConfiguredGithubRepo(): string {
-  if (typeof window === 'undefined') return DEFAULT_GITHUB_REPO;
-  const saved = localStorage.getItem(GITHUB_REPO_STORAGE_KEY)?.trim();
-  return saved && saved.includes('/') ? saved : DEFAULT_GITHUB_REPO;
-}
-
-export function setConfiguredGithubRepo(repo: string): string {
-  const cleaned = repo
-    .trim()
-    .replace(/^https?:\/\/github\.com\//i, '')
-    .replace(/\.git$/i, '')
-    .replace(/^\/+|\/+$/g, '');
+  // Clean up any stale browser localStorage override so browser & app always check the same source
   if (typeof window !== 'undefined') {
-    if (cleaned && cleaned.includes('/')) {
-      localStorage.setItem(GITHUB_REPO_STORAGE_KEY, cleaned);
-    } else {
-      localStorage.removeItem(GITHUB_REPO_STORAGE_KEY);
+    try {
+      localStorage.removeItem(LEGACY_REPO_STORAGE_KEY);
+    } catch {
+      // Ignore storage errors
     }
   }
-  return cleaned && cleaned.includes('/') ? cleaned : DEFAULT_GITHUB_REPO;
+  return DEFAULT_GITHUB_REPO;
 }
 
 export function getSkippedUpdateVersion(): string | null {

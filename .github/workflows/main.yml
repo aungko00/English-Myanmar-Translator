@@ -61,6 +61,14 @@ jobs:
         with:
           path: ~/.android/debug.keystore
           key: me-translator-debug-keystore-v1
+          restore-keys: |
+            me-translator-debug-keystore-
+
+      - name: Prepare Optional Persistent Signing Keystore
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > "${RUNNER_TEMP}/release.keystore"
+          echo "ANDROID_KEYSTORE_PATH=${RUNNER_TEMP}/release.keystore" >> "$GITHUB_ENV"
 
       - name: Compute App Version Metadata
         id: meta
@@ -95,29 +103,13 @@ jobs:
           fi
           npx cap sync android
 
-      - name: Configure Android Version, Permissions & App Icons
+      - name: Configure Android Version, Native Updater, Permissions & Icons
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          BUILD_GRADLE="android/app/build.gradle"
-          sed -i "s/versionCode [0-9]*/versionCode ${{ steps.meta.outputs.version_code }}/" "$BUILD_GRADLE"
-          sed -i "s/versionName \"[^\"]*\"/versionName \"${{ steps.meta.outputs.version }}\"/" "$BUILD_GRADLE"
-
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
-          if ! grep -q "android.permission.RECORD_AUDIO" "$MANIFEST"; then
-            sed -i 's|<uses-permission android:name="android.permission.INTERNET" />|<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />|' "$MANIFEST"
-          fi
-
-          for dir in android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-hdpi android/app/src/main/res/mipmap-xhdpi; do
-            mkdir -p "$dir"
-            cp public/pwa-192x192.png "$dir/ic_launcher.png"
-            cp public/pwa-192x192.png "$dir/ic_launcher_round.png"
-            cp public/pwa-maskable-512x512.png "$dir/ic_launcher_foreground.png"
-          done
-          for dir in android/app/src/main/res/mipmap-xxhdpi android/app/src/main/res/mipmap-xxxhdpi; do
-            mkdir -p "$dir"
-            cp public/pwa-512x512.png "$dir/ic_launcher.png"
-            cp public/pwa-512x512.png "$dir/ic_launcher_round.png"
-            cp public/pwa-maskable-512x512.png "$dir/ic_launcher_foreground.png"
-          done
+          node scripts/setup-android-native.mjs "${{ steps.meta.outputs.version_code }}" "${{ steps.meta.outputs.version }}"
 
       - name: Build Android APK
         run: |
